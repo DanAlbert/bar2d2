@@ -65,6 +65,11 @@ class IngredientListHandler(RequestHandler):
         return self.render('ingredient-list')
 
 
+class DrinkListHandler(RequestHandler):
+    def get(self):
+        return self.render('drink-list')
+
+
 class JsonIngredientListHandler(RequestHandler):
     def get(self):
         ingredients = []
@@ -83,6 +88,20 @@ class JsonIngredientListHandler(RequestHandler):
         abv = int(form['abv'])
         ingredient = Ingredient(name=name, price=price, abv=abv)
         ingredient.put()
+
+
+class JsonDrinkListHandler(RequestHandler):
+    def get(self):
+        drinks = []
+        for drink in Drink.all().order('name'):
+            drinks.append({
+                'name': drink.name,
+                'ingredients': drink.ingredients,
+            })
+        self.response.out.write(json.dumps(drinks))
+
+    def post(self):
+        self.error(501)
 
 
 class IngredientHandler(RequestHandler):
@@ -105,9 +124,11 @@ class IngredientHandler(RequestHandler):
 app = webapp2.WSGIApplication([
     ('/', IngredientListHandler),
     webapp2.Route(r'/ingredient', name='ingredient-list',
-                  handler=IngredientListHandler, methods=['GET', 'POST']),
-    webapp2.Route(r'/ingredient/<key>', name='ingredient',
-                  handler=IngredientHandler, methods=['GET', 'PUT', 'DELETE']),
+                  handler=IngredientListHandler, methods=['GET']),
+    webapp2.Route(r'/drink', name='drink-list',
+                  handler=DrinkListHandler, methods=['GET']),
     webapp2.Route(r'/json/ingredient', name='json-ingredient-list',
                   handler=JsonIngredientListHandler, methods=['GET', 'POST']),
+    webapp2.Route(r'/json/drink', name='json-drink-list',
+                  handler=JsonDrinkListHandler, methods=['GET', 'POST']),
 ], debug=True)

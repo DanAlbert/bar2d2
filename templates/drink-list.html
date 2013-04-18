@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Drink List</h1>
+{#
+<form id="add-form" class="form-inline">
+	<input name="name" type="text" placeholder="Name" />
+	<div class="input-prepend input-append">
+		<span class="add-on">$</span>
+		<input name="price" type="text" class="input-small"
+		       placeholder="Price" />
+		<span class="add-on">per 750ml</span>
+	</div>
+	<div class="input-append">
+		<input name="abv" type="text" class="input-small" placeholder="ABV" />
+		<span class="add-on">%</span>
+	</div>
+	<button id="add-btn" type="button" class="btn"
+			data-loading-text="Adding...">Add</button>
+	<span id="form-errors" class="pull-right"></span>
+</form>
+#}
+<table id="drink-list" class="table table-striped">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Ingredients</th>
+		</tr>
+	</thead>
+	<tbody>
+	</tbody>
+</table>
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="/static/js/types.js"></script>
+<script type="text/javascript">
+	$(document).ready(function ()
+	{
+		$('#add-btn').click(function ()
+		{
+			var json = JSON.stringify($('#add-form').serializeObject());
+			$.ajax({
+				url: '{{ uri_for("json-drink-list") }}',
+				type: 'POST',
+				data: {'form': json},
+			})
+			.done(function ()
+			{
+				$('#add-btn').button('reset');
+
+				var msg = $('<p class="text-success">Drink added</p>');
+				$('#form-errors').html(msg);
+				msg.fadeOut(2000);
+				refreshList();
+				$('#add-form input').val('');
+			})
+			.fail(function ()
+			{
+				$('#save-btn').button('reset');
+				var msg = $('<p class="text-error">An error occurred. Please ' +
+					        'refresh the page and try again.');
+
+				$('#form-errors').html(msg);
+			});
+		});
+		
+		function refreshList()
+		{
+			$.ajax({
+				url: '{{ uri_for("json-drink-list") }}',
+				type: 'GET',
+			})
+			.done(function (data)
+			{
+				var table = $('#drink-list tbody');
+				var result = JSON.parse(data);
+
+				table.empty();
+
+				for (i = 0; i < result.length; i++)
+				{
+					var drink = result[i];
+					var row = $('<tr></tr>');
+					var name = $('<td>' + drink.name + '</td>');
+					var ingredients = $('<td><ul class="unstyled"></ul></td>);
+
+					for (j = 0; j < drink.ingredients.length; j++)
+					{
+						var ingredient = drink.ingredients[j];
+						ingredients.append('<li>' + ingredient.name + '</li>');
+					}
+
+					row.append(name);
+					row.append(ingredients);
+
+					table.append(row);
+				}
+			})
+			.fail(function ()
+			{
+				$('#ingredient-list').replaceWith(
+					$('<p class="text-error">Unable to load drink list. ' +
+					  'Please refresh the page to try again.'));
+			});
+		}
+
+		refreshList();
+	});
+</script>
+{% endblock %}
