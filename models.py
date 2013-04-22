@@ -49,5 +49,18 @@ class Drink(db.Model):
     def volume(self):
         raise NotImplementedError()
 
+    @property
+    def rating(self):
+        total = 0.0
+        for rating in self.rating_set:
+            total += rating.rating
+        return total / len(self.rating_set)
+
     def __unicode__(self):
         return name
+
+
+class Rating(db.Model):
+    drink = db.ReferenceProperty(Drink)
+    rating = db.FloatProperty("A rating for the drink.")
+    user = db.UserProperty("The user that made the rating.")
